@@ -1,0 +1,30 @@
+{
+  "name": "minor-rtw",
+  "version": "1.0.0",
+  "description": "This is a Repo for the course Real Time Web.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IanCStewart/minor-rtw.git"
+  },
+  "keywords": [
+    "minor",
+    "web-dev",
+    "real",
+    "time",
+    "web"
+  ],
+  "author": "Ian Stewart",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/IanCStewart/minor-rtw/issues"
+  },
+  "homepage": "https://github.com/IanCStewart/minor-rtw#readme",
+  "devDependencies": {
+    "eslint": "^3.19.0"
+  }
+}
