@@ -18,6 +18,18 @@ Get the node modules:
 $ npm i
 ```
 
+## Run server
+
+Run start command for the server:
+```
+$ npm run start
+```
+
+Should return something like this:
+```
+Server running 0.0.0.0:3000
+```
+
 # Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the code of conduct, and the process for submitting pull requests.
