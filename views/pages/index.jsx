@@ -4,7 +4,11 @@ import Html from '../components/html';
 function Index() {
   return (
     <Html>
-      <h1>Hello World!</h1>
+      <header><h1>Spoofy Party Player</h1></header>
+      <main>
+        <h2>Please login to spotify</h2>
+        <a href="/login">Login</a>
+      </main>
     </Html>
   );
 }
