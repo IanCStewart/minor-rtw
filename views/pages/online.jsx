@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Html from '../components/html';
 
-function Player({ user }) {
+function Online({ user }) {
   const style = {
     backgroundImage: `url(${user.images[0].url})`,
     backgroundSize: 'cover',
@@ -22,8 +22,8 @@ function Player({ user }) {
   );
 }
 
-Player.propTypes = {
+Online.propTypes = {
   user: PropTypes.instanceOf(Object).isRequired
 };
 
-export default Player;
+export default Online;
