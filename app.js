@@ -1,6 +1,7 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
+const cookieParser = require('cookie-parser');
 
 require('dotenv').config();
 
@@ -16,20 +17,22 @@ if (!clientId || !clientSecret) {
   throw new Error('Missing a `KEY` in .env');
 }
 
+app.use(cookieParser());
+
 app.use(express.static('public', { maxAge: '31d' }))
   .set('views', 'views')
   .set('view engine', 'jsx')
   .engine('jsx', require('express-react-views').createEngine());
 
 app.get('/', (req, res) => {
-  if (req.app.accesToken) {
+  if (req.cookies.spoofyAccessToken) {
     // User has auth redirect to main screen
     res.redirect('/player');
   } else {
     // No auth yet render index with sing in button
     res.render(
       'pages/index',
-      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=user-read-playback-state&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
+      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=user-read-playback-state user-read-private user-read-email&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
     );
   }
 });
@@ -54,14 +57,50 @@ app.get('/callback', (req, res) => {
     )
     .then(data => data.json())
     .then((body) => {
-      req.app.accesToken = body.acces_token;
-      req.app.refreshToken = body.refresh_token;
+      res.cookie('spoofyAccessToken', body.access_token);
+      res.cookie('spoofyRefreshToken', body.refresh_token);
       res.redirect('/player');
     });
   }
 });
 
-app.get('/player', (req, res) => res.send('Welcome to the player'));
+app.get('/player', (req, res) => {
+  fetch(
+    'https://api.spotify.com/v1/me',
+    {
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        res.redirect(`/refresh?redirect=${req.url}`);
+      }
+
+      res.render('pages/player', { user: body });
+    })
+    .catch(err => new Error(err));
+});
+
+app.get('/refresh', (req, res) => {
+  fetch(
+    `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${req.cookies.spoofyRefreshToken}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }
+  ).then(data => data.json())
+  .then((token) => {
+    res.cookie('spoofyAccessToken', token.access_token);
+    res.redirect(req.query.redirect);
+  })
+  .catch(err => res.send(err));
+});
 
 app.listen(port, host, () => {
   console.log(`Server running ${host}:${port}`); // eslint-disable-line no-console
