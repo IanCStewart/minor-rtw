@@ -84,7 +84,28 @@ app.get('/online', (req, res) => {
     .catch(err => new Error(err));
 });
 
+app.get('/player', (req, res) => {
+  fetch(
+    'https://api.spotify.com/v1/me/player/currently-playing',
+    {
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        res.redirect(`/refresh?redirect=${req.url}`);
+      }
+
+      res.render('pages/player', { playing: body });
+    })
+    .catch(err => new Error(err));
+});
+
 app.get('/refresh', (req, res) => {
+  // Refresh the accesToken
   fetch(
     `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${req.cookies.spoofyRefreshToken}`,
     {
