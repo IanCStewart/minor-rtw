@@ -27,7 +27,7 @@ app.use(express.static('public', { maxAge: '31d' }))
 app.get('/', (req, res) => {
   if (req.cookies.spoofyAccessToken) {
     // User has auth redirect to main screen
-    res.redirect('/player');
+    res.redirect('/online');
   } else {
     // No auth yet render index with sing in button
     res.render(
@@ -59,12 +59,12 @@ app.get('/callback', (req, res) => {
     .then((body) => {
       res.cookie('spoofyAccessToken', body.access_token);
       res.cookie('spoofyRefreshToken', body.refresh_token);
-      res.redirect('/player');
+      res.redirect('/online');
     });
   }
 });
 
-app.get('/player', (req, res) => {
+app.get('/online', (req, res) => {
   fetch(
     'https://api.spotify.com/v1/me',
     {
@@ -79,7 +79,7 @@ app.get('/player', (req, res) => {
         res.redirect(`/refresh?redirect=${req.url}`);
       }
 
-      res.render('pages/player', { user: body });
+      res.render('pages/online', { user: body });
     })
     .catch(err => new Error(err));
 });
