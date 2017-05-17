@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src",
     "start": "node app.js",
-    "start-dev": "nodemon app.js"
+    "start:dev": "nodemon -e js,jsx,css app.js"
   },
   "repository": {
     "type": "git",
@@ -36,8 +36,12 @@
     "nodemon": "^1.11.0"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.3",
+    "debug-http": "^1.1.0",
+    "dotenv": "^4.0.0",
     "express": "^4.15.2",
     "express-react-views": "^0.10.2",
+    "node-fetch": "^1.6.3",
     "prop-types": "^15.5.6",
     "react": "^15.5.3",
     "react-dom": "^15.5.3"
