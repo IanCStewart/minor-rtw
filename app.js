@@ -2,6 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
+const JsonDB = require('node-json-db');
 
 require('dotenv').config();
 
@@ -16,6 +17,9 @@ const clientSecret = process.env.CLIENT_SECRET;
 if (!clientId || !clientSecret) {
   throw new Error('Missing a `KEY` in .env');
 }
+
+const db = new JsonDB('spoofyDataBase', true, false);
+console.log(db.getData('/'));
 
 app.use(cookieParser());
 
