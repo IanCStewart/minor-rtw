@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <%- include ../partials/meta -%>
+    <!-- <link rel="stylesheet" type="text/css" href="/css/pages/home.css"> -->
+    <title>Index</title>
+  </head>
+
+  <body>
+    <%- include ../partials/header -%>
+    <main>
+      <section>
+        <div style="background-image: url(<%= playlist.images[0] %>)"></div>
+        <h1><%= playlist.name %></h1>
+        <h2>Created by: <em><%= playlist.owner %></em> • <%= playlist.tracks.length %> songs</h2>
+      </section>
+      <table>
+        <tr>
+          <th>Title</th>
+          <th>Artist</th>
+          <th>📅</th>
+        </tr>
+        <% playlist.tracks.forEach(function (track) { %>
+          <tr>
+            <td><%= track.title %></td>
+            <td><%= track.artist %></td>
+            <td><%= track.date %></td>
+          </tr>
+        <% }); %>
+      </table>
+    </main>
+    <%- include ../partials/footer -%>
+  </body>
+</html>
