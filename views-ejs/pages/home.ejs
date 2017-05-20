@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <%- include ../partials/meta -%>
+    <link rel="stylesheet" type="text/css" href="/css/pages/home.css">
+    <title>Index</title>
+  </head>
+
+  <body>
+    <header><img src="/img/icon.png" alt="icon" /> <h1>Spoofy Playlists</h1></header>
+    <main>
+      <% playlists.forEach(function (playlist) { %>
+        <section class="playlist">
+          <div style="background-image: url(<%= playlist.images[0] %>)"></div>
+          <h1><%= playlist.name %></h1>
+          <h2><%= playlist.owner %></h2>
+        </section>
+      <% }); %>
+    </main>
+  </body>
+</html>
