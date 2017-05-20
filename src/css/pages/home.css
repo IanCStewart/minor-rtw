@@ -1,23 +1,4 @@
-header {
-  display: flex;
-  align-items: center;
-  font-size: 2.5rem;
-  font-weight: bold;
-}
-
-header img {
-  height: 5rem;
-  width: auto;
-  margin-right: .5rem;
-}
-
-header h1 {
-  font-size: 5rem;
-  font-weight: bold;
-}
-
 main {
-  margin: 2rem 0;
   max-height: calc(100% - 9rem);
   display: flex;
   flex-wrap: wrap;
