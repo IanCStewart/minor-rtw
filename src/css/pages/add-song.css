@@ -1,0 +1,28 @@
+h1 {
+  font-weight: bold;
+  margin: 1.2rem 0 .4rem;
+  font-size: 2.6rem;
+}
+
+form {
+  width: 100%;
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 2rem;
+  background: #242424;
+  margin: 2rem 0;
+}
+
+label span {
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  margin-bottom: .5em;
+}
+
+form:invalid button {
+  background: transparent;
+  border: 1px solid #fff;
+}
