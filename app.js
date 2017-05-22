@@ -4,7 +4,7 @@ const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
-const findIndex = require('lodash/findIndex')
+const findIndex = require('lodash/findIndex');
 
 require('dotenv').config();
 
@@ -130,7 +130,7 @@ app.get('/add-song/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId })
+  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId });
 });
 
 app.post('/add-song/:playlistId', (req, res) => {
