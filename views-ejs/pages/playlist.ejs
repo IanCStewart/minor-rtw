@@ -3,26 +3,40 @@
 
   <head>
     <%- include ../partials/meta -%>
-    <!-- <link rel="stylesheet" type="text/css" href="/css/pages/home.css"> -->
+    <link rel="stylesheet" type="text/css" href="/css/pages/playlist.css">
     <title>Index</title>
   </head>
 
   <body>
     <%- include ../partials/header -%>
     <main>
-      <section>
-        <div style="background-image: url(<%= playlist.images[0] %>)"></div>
-        <h1><%= playlist.name %></h1>
-        <h2>Created by: <em><%= playlist.owner %></em> • <%= playlist.tracks.length %> songs</h2>
+      <section class="album-data">
+        <div class="album-artwork" style="background-image: url(<%= playlist.images[0] %>)"></div>
+        <article>
+          <h1><%= playlist.name %></h1>
+          <h2>Created by: <em><%= playlist.owner %></em> • <%= playlist.tracks.length %> songs</h2>
+        </article>
       </section>
       <table>
         <tr>
+          <th></th>
           <th>Title</th>
           <th>Artist</th>
-          <th>📅</th>
+          <th><svg width="423px" height="425px" viewBox="0 0 423 425">
+              <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                  <g id="date-icon" transform="translate(8.000000, 8.000000)">
+                      <path d="M46.1298761,2.84217094e-14 L381.249105,2.84217094e-14 C395.057013,2.84217094e-14 406.250534,11.1961611 406.250534,25.0063493 L406.250534,383.663613 C406.250534,397.474238 395.067576,408.669962 381.258875,408.669962 L24.9916591,408.669962 C11.1891469,408.669962 0,397.476585 0,383.667482 L0,54.611363" id="Path" stroke="#999999" stroke-width="16" stroke-linecap="round"></path>
+                      <text id="2" font-family="ArialRoundedMTBold, Arial Rounded MT Bold" font-size="147" font-weight="normal" fill="#999999">
+                          <tspan x="159.323486" y="282">2</tspan>
+                      </text>
+                      <path d="M1.46873903,92 L404.248869,92" id="Path-2" stroke="#999999" stroke-width="16" stroke-linecap="round"></path>
+                  </g>
+              </g>
+          </svg></th>
         </tr>
         <% playlist.tracks.forEach(function (track) { %>
           <tr>
+            <td></td>
             <td><%= track.title %></td>
             <td><%= track.artist %></td>
             <td><%= track.date %></td>
