@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
     // No auth yet render login
     res.render(
       'pages/login',
-      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=user-read-playback-state user-read-private user-read-email&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
+      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
     );
   }
 });
@@ -90,8 +90,29 @@ app.get('/add-playlist', (req, res) => {
 });
 
 app.post('/add-playlist', (req, res) => {
-  console.log(req.body);
-  res.send(req.body);
+  fetch(
+    'https://api.spotify.com/v1/users/1172537089/playlists',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${req.body.playlist || req.query.name}`,
+        public: false,
+        collaborative: true
+      })
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        res.redirect(`/refresh?redirect=${req.url}?name=${req.body.playlist}`);
+      }
+
+      db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
+      res.redirect('/home');
+    });
 });
 
 app.get('/online', (req, res) => {
