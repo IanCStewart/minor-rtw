@@ -3,6 +3,7 @@ const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
+const bodyParser = require('body-parser');
 
 require('dotenv').config();
 
@@ -19,9 +20,10 @@ if (!clientId || !clientSecret) {
 }
 
 const db = new JsonDB('spoofyDataBase', true, false);
-console.log(db.getData('/'));
 
 app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(express.static('src', { maxAge: '31d' }))
   .set('views', 'views')
@@ -70,11 +72,26 @@ app.get('/callback', (req, res) => {
 app.get('/home', (req, res) => {
   if (req.cookies.spoofyAccessToken) {
     // User has auth render
-    res.render('pages/home', { playlists: [] });
+    res.render('pages/home', { playlists: db.getData('/playlists') });
   } else {
     // No auth yet render login
     res.redirect('/');
   }
+});
+
+app.get('/add-playlist', (req, res) => {
+  if (req.cookies.spoofyAccessToken) {
+    // User has auth render
+    res.render('pages/add-playlist');
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
+});
+
+app.post('/add-playlist', (req, res) => {
+  console.log(req.body);
+  res.send(req.body);
 });
 
 app.get('/online', (req, res) => {
