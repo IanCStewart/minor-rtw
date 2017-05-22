@@ -12,6 +12,10 @@
   margin-right: 3rem;
 }
 
+main {
+  max-height: calc(100% - 10.2rem);
+}
+
 main h1 {
   font-weight: bold;
   text-transform: capitalize;
@@ -33,6 +37,7 @@ table {
   width: 100%;
   text-align: left;
   font-size: 1.4rem;
+  margin-bottom: 4rem;
 }
 
 tr {
