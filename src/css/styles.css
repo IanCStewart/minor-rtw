@@ -56,6 +56,13 @@ body > header h1 {
   font-weight: bold;
 }
 
+body > footer {
+  text-align: center;
+  color: #999;
+  opacity: .5;
+  font-size: 1.2rem;
+}
+
 main {
   margin: 2rem 0;
 }
