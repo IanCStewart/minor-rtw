@@ -23,19 +23,18 @@ console.log(db.getData('/'));
 
 app.use(cookieParser());
 
-app.use(express.static('public', { maxAge: '31d' }))
+app.use(express.static('src', { maxAge: '31d' }))
   .set('views', 'views')
-  .set('view engine', 'jsx')
-  .engine('jsx', require('express-react-views').createEngine());
+  .set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
   if (req.cookies.spoofyAccessToken) {
-    // User has auth redirect to main screen
-    res.redirect('/online');
+    // User has auth render home
+    res.redirect('/home');
   } else {
-    // No auth yet render index with sing in button
+    // No auth yet render login
     res.render(
-      'pages/index',
+      'pages/login',
       { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=user-read-playback-state user-read-private user-read-email&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
     );
   }
@@ -63,8 +62,18 @@ app.get('/callback', (req, res) => {
     .then((body) => {
       res.cookie('spoofyAccessToken', body.access_token);
       res.cookie('spoofyRefreshToken', body.refresh_token);
-      res.redirect('/online');
+      res.redirect('/home');
     });
+  }
+});
+
+app.get('/home', (req, res) => {
+  if (req.cookies.spoofyAccessToken) {
+    // User has auth render
+    res.render('pages/home', { playlists: [] });
+  } else {
+    // No auth yet render login
+    res.redirect('/');
   }
 });
 
@@ -84,26 +93,6 @@ app.get('/online', (req, res) => {
       }
 
       res.render('pages/online', { user: body });
-    })
-    .catch(err => new Error(err));
-});
-
-app.get('/player', (req, res) => {
-  fetch(
-    'https://api.spotify.com/v1/me/player/currently-playing',
-    {
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    })
-    .then(data => data.json())
-    .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      }
-
-      res.render('pages/player', { playing: body });
     })
     .catch(err => new Error(err));
 });
