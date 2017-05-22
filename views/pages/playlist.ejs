@@ -9,6 +9,7 @@
 
   <body>
     <%- include ../partials/header -%>
+    <nav><a href="/home">< go back</a></nav>
     <main>
       <section class="album-data">
         <div class="album-artwork" style="background-image: url(<% if (playlist.images[0]) { %><%= playlist.images[0].url %><% } else { %>/img/playlist-placeholder.jpg<% } %>)"></div>

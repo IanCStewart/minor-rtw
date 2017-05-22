@@ -9,6 +9,7 @@
 
   <body>
     <%- include ../partials/header %>
+    <nav><a href="/playlist/1172537089/<%= playlistId %>">< go back</a></nav>
     <main>
       <h1>Add song to <%= playlistName %></h1>
       <form method="post" action="/add-song/<%= playlistId %>">
