@@ -4,6 +4,7 @@ const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
+const findIndex = require('lodash/findIndex')
 
 require('dotenv').config();
 
@@ -107,7 +108,7 @@ app.post('/add-playlist', (req, res) => {
     .then(data => data.json())
     .then((body) => {
       if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}?name=${req.body.playlist}`);
+        res.redirect(`/refresh?redirect=${req.url}`);
       }
 
       db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
@@ -115,24 +116,11 @@ app.post('/add-playlist', (req, res) => {
     });
 });
 
-app.get('/online', (req, res) => {
-  fetch(
-    'https://api.spotify.com/v1/me',
-    {
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    })
-    .then(data => data.json())
-    .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      }
+app.get('/playlist/:userId/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(db.getData('/playlists'), playlist => playlist.id === req.params.playlistId);
 
-      res.render('pages/online', { user: body });
-    })
-    .catch(err => new Error(err));
+  res.render('pages/playlist', { playlist: allPlaylists[index] });
 });
 
 app.get('/refresh', (req, res) => {
@@ -149,7 +137,7 @@ app.get('/refresh', (req, res) => {
   ).then(data => data.json())
   .then((token) => {
     res.cookie('spoofyAccessToken', token.access_token);
-    res.redirect(req.query.redirect);
+    res.redirect(307, req.query.redirect);
   })
   .catch(err => res.send(err));
 });
