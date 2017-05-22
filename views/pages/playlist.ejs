@@ -37,9 +37,9 @@
         <% playlist.tracks.forEach(function (track) { %>
           <tr>
             <td></td>
-            <td><%= track.title %></td>
-            <td><%= track.artist %></td>
-            <td><%= track.date %></td>
+            <td><%= track.track.name %></td>
+            <td><%= track.track.artists[0].name %></td>
+            <td><%= track.added_at %></td>
           </tr>
         <% }); %>
       </table>
