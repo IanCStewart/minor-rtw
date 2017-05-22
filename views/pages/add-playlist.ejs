@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <%- include ../partials/meta -%>
+    <link rel="stylesheet" type="text/css" href="/css/pages/add-song.css">
+    <title>Index</title>
+  </head>
+
+  <body>
+    <%- include ../partials/header %>
+    <main>
+      <h1>Make a new playlist</h1>
+      <form>
+        <label for="playlist">
+          <span>Playlist name</span>
+          <input required type="text" id="playlist" name="playlist" placeholder="Playlist name...">
+        </label>
+        <button type="submit">Add playlist</button>
+      </form>
+    </main>
+  </body>
+</html>

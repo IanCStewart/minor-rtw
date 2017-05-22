@@ -16,7 +16,7 @@ function Online({ user }) {
       <header><h1>Spoofy Party Player</h1></header>
       <main>
         <div style={style} />
-        <h1>{user.display_name}</h1>
+        <h1>{user.display_name || user.id}</h1>
       </main>
     </Html>
   );
