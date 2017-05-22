@@ -120,7 +120,10 @@ app.get('/playlist/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(db.getData('/playlists'), playlist => playlist.id === req.params.playlistId);
 
-  res.render('pages/playlist', { playlist: allPlaylists[index] });
+  fetch(`https://api.spotify.com/v1/users/${req.params.userId}`)
+    .then(data => data.json())
+    .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
+    .catch(err => res.send(err));
 });
 
 app.get('/refresh', (req, res) => {
