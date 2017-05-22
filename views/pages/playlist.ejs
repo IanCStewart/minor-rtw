@@ -11,10 +11,10 @@
     <%- include ../partials/header -%>
     <main>
       <section class="album-data">
-        <div class="album-artwork" style="background-image: url(<%= playlist.images[0] %>)"></div>
+        <div class="album-artwork" style="background-image: url(<% if (playlist.images[0]) { %><%= playlist.images[0].url %><% } else { %>/img/playlist-placeholder.jpg<% } %>)"></div>
         <article>
           <h1><%= playlist.name %></h1>
-          <h2>Created by: <em><%= playlist.owner %></em> • <%= playlist.tracks.length %> songs</h2>
+          <h2>Created by: <em><%= owner %></em> • <%= playlist.tracks.length %> songs</h2>
         </article>
       </section>
       <table>
@@ -43,6 +43,7 @@
           </tr>
         <% }); %>
       </table>
+      <a class="button" href="/add-song/<%= playlist.id %>">Add a song</a>
     </main>
     <%- include ../partials/footer -%>
   </body>
