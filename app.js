@@ -118,12 +118,62 @@ app.post('/add-playlist', (req, res) => {
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
-  const index = findIndex(db.getData('/playlists'), playlist => playlist.id === req.params.playlistId);
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
   fetch(`https://api.spotify.com/v1/users/${req.params.userId}`)
     .then(data => data.json())
     .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
     .catch(err => res.send(err));
+});
+
+app.get('/add-song/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+
+  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId })
+});
+
+app.post('/add-song/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+
+  fetch(
+    `https://api.spotify.com/v1/users/1172537089/playlists/${req.params.playlistId}/tracks`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        uris: [req.body.uri]
+      })
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        res.redirect(`/refresh?redirect=${req.url}`);
+      }
+
+      fetch(
+        `https://api.spotify.com/v1/users/1172537089/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
+        {
+          headers: {
+            Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }).then(response => response.json())
+        .then((tracks) => {
+          if (tracks.error && tracks.error.message === 'The access token expired') {
+            res.redirect(`/refresh?redirect=${req.url}`);
+          }
+
+          allPlaylists[index].tracks = tracks.tracks.items;
+          allPlaylists[index].images = tracks.images;
+          db.push('/playlists', allPlaylists, true);
+          res.redirect(`/playlist/1172537089/${req.params.playlistId}`);
+        });
+    });
 });
 
 app.get('/refresh', (req, res) => {
