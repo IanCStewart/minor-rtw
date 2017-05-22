@@ -169,11 +169,12 @@ app.post('/add-song/:playlistId', (req, res) => {
         .then((tracks) => {
           if (tracks.error && tracks.error.message === 'The access token expired') {
             res.redirect(`/refresh?redirect=${req.url}`);
+          } else {
+            allPlaylists[index].tracks = tracks.tracks.items;
+            allPlaylists[index].images = tracks.images;
+            db.push('/playlists', allPlaylists, true);
           }
 
-          allPlaylists[index].tracks = tracks.tracks.items;
-          allPlaylists[index].images = tracks.images;
-          db.push('/playlists', allPlaylists, true);
           res.redirect(`/playlist/1172537089/${req.params.playlistId}`);
         })
         .catch(err => res.send(err));
