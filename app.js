@@ -129,19 +129,19 @@ app.get('/playlist/:userId/:playlistId', (req, res) => {
     .catch(err => res.send(err));
 });
 
-app.get('/add-song/:playlistId', (req, res) => {
+app.get('/add-song/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId });
+  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
 });
 
-app.post('/add-song/:playlistId', (req, res) => {
+app.post('/add-song/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
   fetch(
-    `https://api.spotify.com/v1/users/1172537089/playlists/${req.params.playlistId}/tracks`,
+    `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
     {
       method: 'POST',
       headers: {
@@ -159,7 +159,7 @@ app.post('/add-song/:playlistId', (req, res) => {
       }
 
       fetch(
-        `https://api.spotify.com/v1/users/1172537089/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
+        `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
         {
           headers: {
             Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
@@ -175,7 +175,7 @@ app.post('/add-song/:playlistId', (req, res) => {
             db.push('/playlists', allPlaylists, true);
           }
 
-          res.redirect(`/playlist/1172537089/${req.params.playlistId}`);
+          res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
         })
         .catch(err => res.send(err));
     })
