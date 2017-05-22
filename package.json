@@ -31,21 +31,16 @@
     "eslint": "^3.19.0",
     "eslint-config-airbnb": "^14.0.0",
     "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^3.0.2",
-    "eslint-plugin-react": "^6.9.0",
     "nodemon": "^1.11.0"
   },
   "dependencies": {
+    "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
     "debug-http": "^1.1.0",
     "dotenv": "^4.0.0",
     "ejs": "^2.5.6",
     "express": "^4.15.2",
-    "express-react-views": "^0.10.2",
     "node-fetch": "^1.6.3",
-    "node-json-db": "^0.7.3",
-    "prop-types": "^15.5.6",
-    "react": "^15.5.3",
-    "react-dom": "^15.5.3"
+    "node-json-db": "^0.7.3"
   }
 }
