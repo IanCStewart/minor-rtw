@@ -80,7 +80,7 @@ button,
   text-transform: uppercase;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color .2s, border .2s;
   background-color: #2ebd59;
   border: 1px solid #2ebd59;
   color: #fff;

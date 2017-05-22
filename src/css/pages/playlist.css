@@ -12,8 +12,24 @@
   margin-right: 3rem;
 }
 
+nav {
+  margin: 2rem 0;
+  font-size: 1.5rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #999;
+  opacity: .75;
+  transition: color .3s ease-in-out;
+}
+
+nav a:hover {
+  color: #fff;
+}
+
 main {
-  max-height: calc(100% - 10.2rem);
+  max-height: calc(100% - 13.7rem);
 }
 
 main h1 {
