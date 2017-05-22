@@ -66,7 +66,8 @@ app.get('/callback', (req, res) => {
       res.cookie('spoofyAccessToken', body.access_token);
       res.cookie('spoofyRefreshToken', body.refresh_token);
       res.redirect('/home');
-    });
+    })
+    .catch(err => res.send(err));
   }
 });
 
@@ -109,11 +110,13 @@ app.post('/add-playlist', (req, res) => {
     .then((body) => {
       if (body.error && body.error.message === 'The access token expired') {
         res.redirect(`/refresh?redirect=${req.url}`);
+      } else {
+        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
       }
 
-      db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
       res.redirect('/home');
-    });
+    })
+    .catch(err => res.send(err));
 });
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
@@ -172,8 +175,10 @@ app.post('/add-song/:playlistId', (req, res) => {
           allPlaylists[index].images = tracks.images;
           db.push('/playlists', allPlaylists, true);
           res.redirect(`/playlist/1172537089/${req.params.playlistId}`);
-        });
-    });
+        })
+        .catch(err => res.send(err));
+    })
+    .catch(err => res.send(err));
 });
 
 app.get('/refresh', (req, res) => {
