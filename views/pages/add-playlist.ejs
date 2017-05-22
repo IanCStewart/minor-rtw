@@ -9,15 +9,17 @@
 
   <body>
     <%- include ../partials/header %>
+    <nav><a href="/home">< go back</a></nav>
     <main>
       <h1>Make a new playlist</h1>
-      <form>
+      <form method="POST" action="/add-playlist">
         <label for="playlist">
           <span>Playlist name</span>
-          <input required type="text" id="playlist" name="playlist" placeholder="Playlist name...">
+          <input autocomplete="off" required type="text" id="playlist" name="playlist" placeholder="Playlist name...">
         </label>
         <button type="submit">Add playlist</button>
       </form>
     </main>
+    <%- include ../partials/footer -%>
   </body>
 </html>

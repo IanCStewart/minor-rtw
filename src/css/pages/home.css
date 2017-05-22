@@ -1,8 +1,16 @@
 main {
-  max-height: calc(100% - 9rem);
+  max-height: calc(100% - 10.2rem);
+  overflow: auto;
+}
+
+.all-playlists {
   display: flex;
   flex-wrap: wrap;
-  overflow: auto;
+}
+
+.all-playlists a {
+  text-decoration: none;
+  color: inherit;
 }
 
 .playlist {
@@ -26,5 +34,13 @@ main {
 
 .playlist h2 {
   font-size: 1.4rem;
+  color: #999;
+}
+
+.empty-state {
+  width: 100%;
+  text-align: center;
+  margin: 1.2rem 0;
+  font-size: 1.6rem;
   color: #999;
 }

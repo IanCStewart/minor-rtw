@@ -9,12 +9,13 @@
 
   <body>
     <%- include ../partials/header -%>
+    <nav><a href="/home">< go back</a></nav>
     <main>
       <section class="album-data">
-        <div class="album-artwork" style="background-image: url(<%= playlist.images[0] %>)"></div>
+        <div class="album-artwork" style="background-image: url(<% if (playlist.images[0]) { %><%= playlist.images[0].url %><% } else { %>/img/playlist-placeholder.jpg<% } %>)"></div>
         <article>
           <h1><%= playlist.name %></h1>
-          <h2>Created by: <em><%= playlist.owner %></em> • <%= playlist.tracks.length %> songs</h2>
+          <h2>Created by: <em><%= owner %></em> • <%= playlist.tracks.length %> songs</h2>
         </article>
       </section>
       <table>
@@ -37,12 +38,13 @@
         <% playlist.tracks.forEach(function (track) { %>
           <tr>
             <td></td>
-            <td><%= track.title %></td>
-            <td><%= track.artist %></td>
-            <td><%= track.date %></td>
+            <td><%= track.track.name %></td>
+            <td><%= track.track.artists[0].name %></td>
+            <td><%= track.added_at %></td>
           </tr>
         <% }); %>
       </table>
+      <a class="button" href="/add-song/<%= playlist.ownerId %>/<%= playlist.id %>">Add a song</a>
     </main>
     <%- include ../partials/footer -%>
   </body>

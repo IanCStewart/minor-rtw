@@ -9,15 +9,17 @@
 
   <body>
     <%- include ../partials/header %>
+    <nav><a href="/playlist/<%= userId %>/<%= playlistId %>">< go back</a></nav>
     <main>
       <h1>Add song to <%= playlistName %></h1>
-      <form>
+      <form method="post" action="/add-song/<%= playlistId %>">
         <label for="uri">
           <span>Spotify URI</span>
-          <input required type="text" id="uri" name="uri" placeholder="Spotify URI...">
+          <input autocomplete="off" required type="text" id="uri" name="uri" placeholder="Spotify URI...">
         </label>
         <button type="submit">Add song</button>
       </form>
     </main>
+    <%- include ../partials/footer -%>
   </body>
 </html>

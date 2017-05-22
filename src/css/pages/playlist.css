@@ -12,6 +12,26 @@
   margin-right: 3rem;
 }
 
+nav {
+  margin: 2rem 0;
+  font-size: 1.5rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #999;
+  opacity: .75;
+  transition: color .3s ease-in-out;
+}
+
+nav a:hover {
+  color: #fff;
+}
+
+main {
+  max-height: calc(100% - 13.7rem);
+}
+
 main h1 {
   font-weight: bold;
   text-transform: capitalize;
@@ -33,6 +53,7 @@ table {
   width: 100%;
   text-align: left;
   font-size: 1.4rem;
+  margin-bottom: 4rem;
 }
 
 tr {

@@ -3,6 +3,8 @@ const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
+const bodyParser = require('body-parser');
+const findIndex = require('lodash/findIndex');
 
 require('dotenv').config();
 
@@ -19,9 +21,10 @@ if (!clientId || !clientSecret) {
 }
 
 const db = new JsonDB('spoofyDataBase', true, false);
-console.log(db.getData('/'));
 
 app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(express.static('src', { maxAge: '31d' }))
   .set('views', 'views')
@@ -35,7 +38,7 @@ app.get('/', (req, res) => {
     // No auth yet render login
     res.render(
       'pages/login',
-      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=user-read-playback-state user-read-private user-read-email&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
+      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
     );
   }
 });
@@ -63,28 +66,91 @@ app.get('/callback', (req, res) => {
       res.cookie('spoofyAccessToken', body.access_token);
       res.cookie('spoofyRefreshToken', body.refresh_token);
       res.redirect('/home');
-    });
+    })
+    .catch(err => res.send(err));
   }
 });
 
 app.get('/home', (req, res) => {
   if (req.cookies.spoofyAccessToken) {
     // User has auth render
-    res.render('pages/home', { playlists: [] });
+    res.render('pages/home', { playlists: db.getData('/playlists') });
   } else {
     // No auth yet render login
     res.redirect('/');
   }
 });
 
-app.get('/online', (req, res) => {
+app.get('/add-playlist', (req, res) => {
+  if (req.cookies.spoofyAccessToken) {
+    // User has auth render
+    res.render('pages/add-playlist');
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
+});
+
+app.post('/add-playlist', (req, res) => {
   fetch(
-    'https://api.spotify.com/v1/me',
+    'https://api.spotify.com/v1/users/1172537089/playlists',
     {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${req.body.playlist || req.query.name}`,
+        public: false,
+        collaborative: true
+      })
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        res.redirect(`/refresh?redirect=${req.url}`);
+      } else {
+        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
       }
+
+      res.redirect('/home');
+    })
+    .catch(err => res.send(err));
+});
+
+app.get('/playlist/:userId/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+
+  fetch(`https://api.spotify.com/v1/users/${req.params.userId}`)
+    .then(data => data.json())
+    .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
+    .catch(err => res.send(err));
+});
+
+app.get('/add-song/:userId/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+
+  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
+});
+
+app.post('/add-song/:userId/:playlistId', (req, res) => {
+  const allPlaylists = db.getData('/playlists');
+  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+
+  fetch(
+    `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        uris: [req.body.uri]
+      })
     })
     .then(data => data.json())
     .then((body) => {
@@ -92,9 +158,28 @@ app.get('/online', (req, res) => {
         res.redirect(`/refresh?redirect=${req.url}`);
       }
 
-      res.render('pages/online', { user: body });
+      fetch(
+        `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
+        {
+          headers: {
+            Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }).then(response => response.json())
+        .then((tracks) => {
+          if (tracks.error && tracks.error.message === 'The access token expired') {
+            res.redirect(`/refresh?redirect=${req.url}`);
+          } else {
+            allPlaylists[index].tracks = tracks.tracks.items;
+            allPlaylists[index].images = tracks.images;
+            db.push('/playlists', allPlaylists, true);
+          }
+
+          res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
+        })
+        .catch(err => res.send(err));
     })
-    .catch(err => new Error(err));
+    .catch(err => res.send(err));
 });
 
 app.get('/refresh', (req, res) => {
@@ -111,7 +196,7 @@ app.get('/refresh', (req, res) => {
   ).then(data => data.json())
   .then((token) => {
     res.cookie('spoofyAccessToken', token.access_token);
-    res.redirect(req.query.redirect);
+    res.redirect(307, req.query.redirect);
   })
   .catch(err => res.send(err));
 });
