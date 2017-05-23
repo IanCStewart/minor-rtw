@@ -44,7 +44,8 @@ main p {
 
 main img {
   position: absolute;
-  top: 120px;
-  left: 80px;
+  top: calc(50% - 14.6rem);
+  left: calc(50% - 44rem);
+  transform: translate(50%, -50%);
   z-index: 0;
 }
