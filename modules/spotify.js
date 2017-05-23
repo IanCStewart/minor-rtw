@@ -56,7 +56,7 @@ spotify.addNewPlaylist = req => new Promise((resolve, reject) => {
 
       return resolve(body);
     })
-    .catch(err => console.log(err));
+    .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
 spotify.addTrackToPlaylist = req => new Promise((resolve, reject) => {
@@ -80,7 +80,7 @@ spotify.addTrackToPlaylist = req => new Promise((resolve, reject) => {
 
       return resolve(body);
     })
-    .catch(err => console.log(err));
+    .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
 spotify.getPlaylistData = req => new Promise((resolve, reject) => {
@@ -99,7 +99,7 @@ spotify.getPlaylistData = req => new Promise((resolve, reject) => {
 
       return resolve(tracks);
     })
-    .catch(err => console.log(err));
+    .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
 spotify.refresh = (req, res) => new Promise((resolve, reject) => {
