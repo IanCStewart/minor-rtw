@@ -130,51 +130,33 @@ app.get('/add-song/:userId/:playlistId', (req, res) => {
   res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
 });
 
-app.post('/add-song/:userId/:playlistId', (req, res) => {
+function savePlaylist(req, data) {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  allPlaylists[index].tracks = data.tracks.items;
+  allPlaylists[index].images = data.images;
+  db.push('/playlists', allPlaylists, true);
+  return data;
+}
 
-  fetch(
-    `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        uris: [req.body.uri]
-      })
-    })
-    .then(data => data.json())
+app.post('/add-song/:userId/:playlistId', (req, res) => {
+  spotify.addTrackToPlaylist(req)
+    .then(() => spotify.getPlaylistData(req))
+    .then(body => savePlaylist(req, body))
     .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      }
-
-      fetch(
-        `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
-        {
-          headers: {
-            Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }).then(response => response.json())
-        .then((tracks) => {
-          if (tracks.error && tracks.error.message === 'The access token expired') {
-            res.redirect(`/refresh?redirect=${req.url}`);
-          } else {
-            allPlaylists[index].tracks = tracks.tracks.items;
-            allPlaylists[index].images = tracks.images;
-            db.push('/playlists', allPlaylists, true);
-            nsp.to(`${req.params.playlistId}`).emit('track', tracks);
-          }
-
-          res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
-        })
-        .catch(err => res.send(err));
+      nsp.to(`${req.params.playlistId}`).emit('track', body);
+      res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
-    .catch(err => res.send(err));
+    .catch(() => spotify.refresh(req, res)
+      .then(token => spotify.addTrackToPlaylist(req, token))
+      .then(() => spotify.getPlaylistData(req))
+      .then(body => savePlaylist(req, body))
+      .then((body) => {
+        nsp.to(`${req.params.playlistId}`).emit('track', body);
+        res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
+      })
+      .catch(err => res.render('pages/500', { err: err.message }))
+    );
 });
 
 app.get('/refresh', (req, res) => {

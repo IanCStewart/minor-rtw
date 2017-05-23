@@ -59,13 +59,13 @@ spotify.addNewPlaylist = req => new Promise((resolve, reject) => {
     .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
-spotify.addTrackToPlaylist = req => new Promise((resolve, reject) => {
+spotify.addTrackToPlaylist = (req, token) => new Promise((resolve, reject) => {
   fetch(
     `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
     {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        Authorization: `Bearer ${token || req.cookies.spoofyAccessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -77,6 +77,7 @@ spotify.addTrackToPlaylist = req => new Promise((resolve, reject) => {
       if (body.error && body.error.message === 'The access token expired') {
         return reject();
       }
+
 
       return resolve(body);
     })
@@ -115,7 +116,7 @@ spotify.refresh = (req, res) => new Promise((resolve, reject) => {
   ).then(data => data.json())
   .then((token) => {
     res.cookie('spoofyAccessToken', token.access_token);
-    resolve();
+    resolve(token.access_token);
   })
   .catch(err => reject(err));
 });
