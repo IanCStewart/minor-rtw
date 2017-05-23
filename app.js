@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const socket = require('socket.io');
 const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
@@ -11,6 +13,23 @@ require('dotenv').config();
 const port = process.env.PORT || '3000';
 const host = process.env.HOST || '0.0.0.0';
 const app = express();
+
+const server = http.Server(app);
+const io = socket(server);
+const nsp = io.of('/playlist');
+
+nsp.on('connection', (client) => {
+  client.on('room', (room) => {
+    client.join(room);
+    console.log('client joined room', room);
+
+    client.on('disconnect', () => {
+      client.leave(room);
+      console.log('client leaved room', room);
+    });
+  });
+});
+
 debugHttp();
 
 const clientId = process.env.CLIENT_ID;
@@ -173,6 +192,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
             allPlaylists[index].tracks = tracks.tracks.items;
             allPlaylists[index].images = tracks.images;
             db.push('/playlists', allPlaylists, true);
+            nsp.to(`${req.params.playlistId}`).emit('track', tracks);
           }
 
           res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
@@ -201,7 +221,7 @@ app.get('/refresh', (req, res) => {
   .catch(err => res.send(err));
 });
 
-app.listen(port, host, () => {
+server.listen(port, host, () => {
   console.log(`Server running ${host}:${port}`); // eslint-disable-line no-console
 });
 
