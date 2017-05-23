@@ -102,4 +102,22 @@ spotify.getPlaylistData = req => new Promise((resolve, reject) => {
     .catch(err => console.log(err));
 });
 
+spotify.refresh = (req, res) => new Promise((resolve, reject) => {
+  fetch(
+    `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${req.cookies.spoofyRefreshToken}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }
+  ).then(data => data.json())
+  .then((token) => {
+    res.cookie('spoofyAccessToken', token.access_token);
+    resolve();
+  })
+  .catch(err => reject(err));
+});
+
 module.exports = spotify;
