@@ -33,13 +33,13 @@ spotify.getUser = req => new Promise((resolve, reject) => {
     .catch(err => reject(err));
 });
 
-spotify.addNewPlaylist = req => new Promise((resolve, reject) => {
+spotify.addNewPlaylist = (req, token) => new Promise((resolve, reject) => {
   fetch(
     'https://api.spotify.com/v1/users/1172537089/playlists',
     {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        Authorization: `Bearer ${token || req.cookies.spoofyAccessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

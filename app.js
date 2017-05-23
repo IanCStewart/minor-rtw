@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const socket = require('socket.io');
-const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
@@ -98,18 +97,17 @@ app.get('/add-playlist', (req, res) => {
   }
 });
 
+function saveNewPlaylist(res, data) {
+  db.push('/playlists[]', { id: data.id, name: data.name, images: data.images, ownerId: data.owner.id, tracks: data.tracks.items }, true);
+  res.redirect('/home');
+}
+
 app.post('/add-playlist', (req, res) => {
   spotify.addNewPlaylist(req)
-    .then((body) => {
-      db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
-      res.redirect('/home');
-    })
+    .then(body => saveNewPlaylist(res, body))
     .catch(() => spotify.refresh()
-      .then(() => spotify.addNewPlaylist(req))
-      .then((body) => {
-        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
-        res.redirect('/home');
-      })
+      .then(token => spotify.addNewPlaylist(req, token))
+      .then(body => saveNewPlaylist(res, body))
       .catch(err => res.render('pages/500', { err: err.message }))
     );
 });
@@ -157,25 +155,6 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
       })
       .catch(err => res.render('pages/500', { err: err.message }))
     );
-});
-
-app.get('/refresh', (req, res) => {
-  // Refresh the accesToken
-  fetch(
-    `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${req.cookies.spoofyRefreshToken}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
-  ).then(data => data.json())
-  .then((token) => {
-    res.cookie('spoofyAccessToken', token.access_token);
-    res.redirect(307, req.query.redirect);
-  })
-  .catch(err => res.send(err));
 });
 
 server.listen(port, host, () => {
