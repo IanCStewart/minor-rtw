@@ -72,7 +72,7 @@ app.get('/callback', (req, res) => {
     res.redirect('/');
   } else {
     // Everything seems fine. Let's move on.
-    spotify.callback()
+    spotify.callback(req, res)
       .then(() => res.redirect('/home'))
       .catch(err => res.render('pages/500', { err: err.message }));
   }
