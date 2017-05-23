@@ -147,7 +147,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
     })
     .catch(() => spotify.refresh(req, res)
       .then(token => spotify.addTrackToPlaylist(req, token))
-      .then(() => spotify.getPlaylistData(req))
+      .then(token => spotify.getPlaylistData(req, token))
       .then(body => savePlaylist(req, body))
       .then((body) => {
         nsp.to(`${req.params.playlistId}`).emit('track', body);

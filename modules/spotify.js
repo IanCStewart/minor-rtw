@@ -78,18 +78,17 @@ spotify.addTrackToPlaylist = (req, token) => new Promise((resolve, reject) => {
         return reject();
       }
 
-
-      return resolve(body);
+      return resolve(token);
     })
     .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
-spotify.getPlaylistData = req => new Promise((resolve, reject) => {
+spotify.getPlaylistData = (req, token) => new Promise((resolve, reject) => {
   fetch(
     `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
     {
       headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        Authorization: `Bearer ${token || req.cookies.spoofyAccessToken}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }).then(response => response.json())
