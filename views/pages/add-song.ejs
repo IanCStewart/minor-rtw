@@ -12,7 +12,7 @@
     <nav><a href="/playlist/<%= userId %>/<%= playlistId %>">< go back</a></nav>
     <main>
       <h1>Add song to <%= playlistName %></h1>
-      <form method="post" action="/add-song/<%= playlistId %>">
+      <form method="post" action="/add-song/<%= userId %>/<%= playlistId %>">
         <label for="uri">
           <span>Spotify URI</span>
           <input autocomplete="off" required type="text" id="uri" name="uri" placeholder="Spotify URI...">

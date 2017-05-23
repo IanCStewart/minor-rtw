@@ -47,5 +47,27 @@
       <a class="button" href="/add-song/<%= playlist.ownerId %>/<%= playlist.id %>">Add a song</a>
     </main>
     <%- include ../partials/footer -%>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.1/socket.io.js"></script>
+    <script>
+      var socket = io('/playlist');
+
+      socket.on('connect', function() {
+        // Connected, let's sign-up to receive messages for this room
+        socket.emit('room', '<%= playlist.id %>');
+      });
+
+      socket.on('track', function(data) {
+        var index = data.tracks.items.length;
+        document.getElementsByTagName('table')[0].insertAdjacentHTML(
+          'beforeend',
+          '<tr>' +
+            '<td></td>' +
+            '<td>' + data.tracks.items[index - 1].track.name + '</td>' +
+            '<td>' + data.tracks.items[index - 1].track.artists[0].name + '</td>' +
+            '<td>' + data.tracks.items[index - 1].track.added_at + '</td>' +
+          '</tr>'
+        );
+      });
+    </script>
   </body>
 </html>
