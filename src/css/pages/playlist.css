@@ -30,6 +30,7 @@ nav a:hover {
 
 main {
   max-height: calc(100% - 13.7rem);
+  overflow: auto;
 }
 
 main h1 {
