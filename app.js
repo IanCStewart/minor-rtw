@@ -7,29 +7,13 @@ const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
 const findIndex = require('lodash/findIndex');
 const spotify = require('./modules/spotify');
+const cookie = require('cookie');
 
 require('dotenv').config();
 
 const port = process.env.PORT || '3000';
 const host = process.env.HOST || '0.0.0.0';
 const app = express();
-
-const server = http.Server(app);
-const io = socket(server);
-const nspPlaylist = io.of('/playlist');
-const nspHome = io.of('/home');
-
-nspPlaylist.on('connection', (client) => {
-  client.on('room', (room) => {
-    client.join(room);
-    console.log('client joined room', room);
-
-    client.on('disconnect', () => {
-      client.leave(room);
-      console.log('client leaved room', room);
-    });
-  });
-});
 
 debugHttp();
 
@@ -42,6 +26,27 @@ if (!clientId || !clientSecret) {
 
 const db = new JsonDB('spoofyDataBase', true, false);
 
+const server = http.Server(app);
+const io = socket(server);
+const nspPlaylist = io.of('/playlist');
+const nspHome = io.of('/home');
+
+nspHome.on('connection', (client) => {
+  client.on('disconnect', () => {
+    db.push('/diconected[]', { id: cookie.parse(client.handshake.headers.cookie).spoofyUserId, missed: [] }, true);
+  });
+});
+
+nspPlaylist.on('connection', (client) => {
+  client.on('room', (room) => {
+    client.join(room);
+
+    client.on('disconnect', () => {
+      client.leave(room);
+    });
+  });
+});
+
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -51,7 +56,7 @@ app.use(express.static('src', { maxAge: '31d' }))
   .set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render home
     res.redirect('/home');
   } else {
@@ -73,13 +78,14 @@ app.get('/callback', (req, res) => {
   } else {
     // Everything seems fine. Let's move on.
     spotify.callback(req, res)
+      .then(token => spotify.getCurrentUser(req, res, token))
       .then(() => res.redirect('/home'))
       .catch(err => res.render('pages/500', { err: err.message }));
   }
 });
 
 app.get('/home', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render
     res.render('pages/home', { playlists: db.getData('/playlists') });
   } else {
@@ -89,7 +95,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/add-playlist', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render
     res.render('pages/add-playlist');
   } else {
@@ -122,19 +128,31 @@ app.post('/add-playlist', (req, res) => {
 });
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
-  const allPlaylists = db.getData('/playlists');
-  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
+    // User has auth render
+    const allPlaylists = db.getData('/playlists');
+    const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  spotify.getUser(req)
+    spotify.getUser(req)
     .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
     .catch(err => res.render('pages/500', { err: err.message }));
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
 });
 
 app.get('/add-song/:userId/:playlistId', (req, res) => {
-  const allPlaylists = db.getData('/playlists');
-  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
+    // User has auth render
+    const allPlaylists = db.getData('/playlists');
+    const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
+    res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
 });
 
 function savePlaylist(req, data) {
