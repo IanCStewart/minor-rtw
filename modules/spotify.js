@@ -83,4 +83,23 @@ spotify.addTrackToPlaylist = req => new Promise((resolve, reject) => {
     .catch(err => console.log(err));
 });
 
+spotify.getPlaylistData = req => new Promise((resolve, reject) => {
+  fetch(
+    `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
+    {
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }).then(response => response.json())
+    .then((tracks) => {
+      if (tracks.error && tracks.error.message === 'The access token expired') {
+        return reject();
+      }
+
+      return resolve(tracks);
+    })
+    .catch(err => console.log(err));
+});
+
 module.exports = spotify;
