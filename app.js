@@ -1,12 +1,12 @@
 const express = require('express');
 const http = require('http');
 const socket = require('socket.io');
-const fetch = require('node-fetch');
 const debugHttp = require('debug-http');
 const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
 const findIndex = require('lodash/findIndex');
+const spotify = require('./modules/spotify');
 
 require('dotenv').config();
 
@@ -71,22 +71,9 @@ app.get('/callback', (req, res) => {
     res.redirect('/');
   } else {
     // Everything seems fine. Let's move on.
-    fetch(`https://accounts.spotify.com/api/token?grant_type=authorization_code&code=${req.query.code}&redirect_uri=http://localhost:3000/callback`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    )
-    .then(data => data.json())
-    .then((body) => {
-      res.cookie('spoofyAccessToken', body.access_token);
-      res.cookie('spoofyRefreshToken', body.refresh_token);
-      res.redirect('/home');
-    })
-    .catch(err => res.send(err));
+    spotify.callback(req, res)
+      .then(() => res.redirect('/home'))
+      .catch(err => res.render('pages/500', { err: err.message }));
   }
 });
 
@@ -110,42 +97,28 @@ app.get('/add-playlist', (req, res) => {
   }
 });
 
-app.post('/add-playlist', (req, res) => {
-  fetch(
-    'https://api.spotify.com/v1/users/1172537089/playlists',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: `${req.body.playlist || req.query.name}`,
-        public: false,
-        collaborative: true
-      })
-    })
-    .then(data => data.json())
-    .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      } else {
-        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
-      }
+function saveNewPlaylist(res, data) {
+  db.push('/playlists[]', { id: data.id, name: data.name, images: data.images, ownerId: data.owner.id, tracks: data.tracks.items }, true);
+  res.redirect('/home');
+}
 
-      res.redirect('/home');
-    })
-    .catch(err => res.send(err));
+app.post('/add-playlist', (req, res) => {
+  spotify.addNewPlaylist(req)
+    .then(body => saveNewPlaylist(res, body))
+    .catch(() => spotify.refresh()
+      .then(token => spotify.addNewPlaylist(req, token))
+      .then(body => saveNewPlaylist(res, body))
+      .catch(err => res.render('pages/500', { err: err.message }))
+    );
 });
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  fetch(`https://api.spotify.com/v1/users/${req.params.userId}`)
-    .then(data => data.json())
+  spotify.getUser(req)
     .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
-    .catch(err => res.send(err));
+    .catch(err => res.render('pages/500', { err: err.message }));
 });
 
 app.get('/add-song/:userId/:playlistId', (req, res) => {
@@ -155,70 +128,33 @@ app.get('/add-song/:userId/:playlistId', (req, res) => {
   res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
 });
 
-app.post('/add-song/:userId/:playlistId', (req, res) => {
+function savePlaylist(req, data) {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  allPlaylists[index].tracks = data.tracks.items;
+  allPlaylists[index].images = data.images;
+  db.push('/playlists', allPlaylists, true);
+  return data;
+}
 
-  fetch(
-    `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        uris: [req.body.uri]
-      })
-    })
-    .then(data => data.json())
+app.post('/add-song/:userId/:playlistId', (req, res) => {
+  spotify.addTrackToPlaylist(req)
+    .then(() => spotify.getPlaylistData(req))
+    .then(body => savePlaylist(req, body))
     .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      }
-
-      fetch(
-        `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}?fields=tracks.items(added_at,track(name,artists)),images`,
-        {
-          headers: {
-            Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        }).then(response => response.json())
-        .then((tracks) => {
-          if (tracks.error && tracks.error.message === 'The access token expired') {
-            res.redirect(`/refresh?redirect=${req.url}`);
-          } else {
-            allPlaylists[index].tracks = tracks.tracks.items;
-            allPlaylists[index].images = tracks.images;
-            db.push('/playlists', allPlaylists, true);
-            nsp.to(`${req.params.playlistId}`).emit('track', tracks);
-          }
-
-          res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
-        })
-        .catch(err => res.send(err));
+      nsp.to(`${req.params.playlistId}`).emit('track', body);
+      res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
-    .catch(err => res.send(err));
-});
-
-app.get('/refresh', (req, res) => {
-  // Refresh the accesToken
-  fetch(
-    `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${req.cookies.spoofyRefreshToken}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
-  ).then(data => data.json())
-  .then((token) => {
-    res.cookie('spoofyAccessToken', token.access_token);
-    res.redirect(307, req.query.redirect);
-  })
-  .catch(err => res.send(err));
+    .catch(() => spotify.refresh(req, res)
+      .then(token => spotify.addTrackToPlaylist(req, token))
+      .then(token => spotify.getPlaylistData(req, token))
+      .then(body => savePlaylist(req, body))
+      .then((body) => {
+        nsp.to(`${req.params.playlistId}`).emit('track', body);
+        res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
+      })
+      .catch(err => res.render('pages/500', { err: err.message }))
+    );
 });
 
 server.listen(port, host, () => {
