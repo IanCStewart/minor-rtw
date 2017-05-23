@@ -118,10 +118,9 @@ app.get('/playlist/:userId/:playlistId', (req, res) => {
   const allPlaylists = db.getData('/playlists');
   const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  fetch(`https://api.spotify.com/v1/users/${req.params.userId}`)
-    .then(data => data.json())
+  spotify.getUser(req)
     .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
-    .catch(err => res.send(err));
+    .catch(err => res.render('pages/500', { err: err.message }));
 });
 
 app.get('/add-song/:userId/:playlistId', (req, res) => {
