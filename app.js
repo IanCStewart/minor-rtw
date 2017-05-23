@@ -16,9 +16,10 @@ const app = express();
 
 const server = http.Server(app);
 const io = socket(server);
-const nsp = io.of('/playlist');
+const nspPlaylist = io.of('/playlist');
+const nspHome = io.of('/home');
 
-nsp.on('connection', (client) => {
+nspPlaylist.on('connection', (client) => {
   client.on('room', (room) => {
     client.join(room);
     console.log('client joined room', room);
@@ -97,18 +98,26 @@ app.get('/add-playlist', (req, res) => {
   }
 });
 
-function saveNewPlaylist(res, data) {
+function saveNewPlaylist(data) {
   db.push('/playlists[]', { id: data.id, name: data.name, images: data.images, ownerId: data.owner.id, tracks: data.tracks.items }, true);
-  res.redirect('/home');
+  return data;
 }
 
 app.post('/add-playlist', (req, res) => {
   spotify.addNewPlaylist(req)
-    .then(body => saveNewPlaylist(res, body))
+    .then(body => saveNewPlaylist(body))
+    .then((body) => {
+      nspHome.emit('playlist', body);
+      res.redirect('/home');
+    })
     .catch(() => spotify.refresh()
       .then(token => spotify.addNewPlaylist(req, token))
-      .then(body => saveNewPlaylist(res, body))
-      .catch(err => res.render('pages/500', { err: err.message }))
+      .then(body => saveNewPlaylist(body))
+      .then((body) => {
+        nspHome.emit('playlist', body);
+        res.redirect('/home');
+      })
+      .catch(err => res.send(err.message))
     );
 });
 
@@ -142,7 +151,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
     .then(() => spotify.getPlaylistData(req))
     .then(body => savePlaylist(req, body))
     .then((body) => {
-      nsp.to(`${req.params.playlistId}`).emit('track', body);
+      nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
       res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
     .catch(() => spotify.refresh(req, res)
@@ -150,7 +159,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
       .then(token => spotify.getPlaylistData(req, token))
       .then(body => savePlaylist(req, body))
       .then((body) => {
-        nsp.to(`${req.params.playlistId}`).emit('track', body);
+        nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
         res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
       })
       .catch(err => res.render('pages/500', { err: err.message }))
