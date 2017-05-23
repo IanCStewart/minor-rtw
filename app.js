@@ -99,31 +99,19 @@ app.get('/add-playlist', (req, res) => {
 });
 
 app.post('/add-playlist', (req, res) => {
-  fetch(
-    'https://api.spotify.com/v1/users/1172537089/playlists',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: `${req.body.playlist || req.query.name}`,
-        public: false,
-        collaborative: true
-      })
-    })
-    .then(data => data.json())
+  spotify.addNewPlaylist(req)
     .then((body) => {
-      if (body.error && body.error.message === 'The access token expired') {
-        res.redirect(`/refresh?redirect=${req.url}`);
-      } else {
-        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
-      }
-
+      db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
       res.redirect('/home');
     })
-    .catch(err => res.send(err));
+    .catch(() => spotify.refresh()
+      .then(() => spotify.addNewPlaylist(req))
+      .then((body) => {
+        db.push('/playlists[]', { id: body.id, name: body.name, images: body.images, ownerId: body.owner.id, tracks: body.tracks.items }, true);
+        res.redirect('/home');
+      })
+      .catch(err => res.render('pages/500', { err: err.message }))
+    );
 });
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
