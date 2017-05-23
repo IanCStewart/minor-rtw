@@ -33,4 +33,30 @@ spotify.getUser = req => new Promise((resolve, reject) => {
     .catch(err => reject(err));
 });
 
+spotify.addNewPlaylist = req => new Promise((resolve, reject) => {
+  fetch(
+    'https://api.spotify.com/v1/users/1172537089/playlists',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: `${req.body.playlist}`,
+        public: false,
+        collaborative: true
+      })
+    })
+    .then(data => data.json())
+    .then((body) => {
+      if (body.error && body.error.message === 'The access token expired') {
+        return reject();
+      }
+
+      return resolve(body);
+    })
+    .catch(err => console.log(err));
+});
+
 module.exports = spotify;
