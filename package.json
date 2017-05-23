@@ -42,6 +42,7 @@
     "express": "^4.15.2",
     "lodash": "^4.17.4",
     "node-fetch": "^1.6.3",
-    "node-json-db": "^0.7.3"
+    "node-json-db": "^0.7.3",
+    "socket.io": "^2.0.1"
   }
 }
