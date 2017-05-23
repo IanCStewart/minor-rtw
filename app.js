@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
 const findIndex = require('lodash/findIndex');
+const spotify = require('./modules/spotify');
 
 require('dotenv').config();
 
@@ -71,22 +72,9 @@ app.get('/callback', (req, res) => {
     res.redirect('/');
   } else {
     // Everything seems fine. Let's move on.
-    fetch(`https://accounts.spotify.com/api/token?grant_type=authorization_code&code=${req.query.code}&redirect_uri=http://localhost:3000/callback`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${new Buffer(`${clientId}:${clientSecret}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    )
-    .then(data => data.json())
-    .then((body) => {
-      res.cookie('spoofyAccessToken', body.access_token);
-      res.cookie('spoofyRefreshToken', body.refresh_token);
-      res.redirect('/home');
-    })
-    .catch(err => res.send(err));
+    spotify.callback()
+      .then(() => res.redirect('/home'))
+      .catch(err => res.render('pages/500', { err: err.message }));
   }
 });
 
