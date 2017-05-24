@@ -21,9 +21,26 @@ spotify.callback = (req, res) => new Promise((resolve, reject) => {
   .then((body) => {
     res.cookie('spoofyAccessToken', body.access_token);
     res.cookie('spoofyRefreshToken', body.refresh_token);
-    resolve();
+    resolve(body.access_token);
   })
   .catch(err => reject(err));
+});
+
+spotify.getCurrentUser = (req, res, token = null) => new Promise((resolve, reject) => {
+  fetch(
+    'https://api.spotify.com/v1/me',
+    {
+      headers: {
+        Authorization: `Bearer ${token || req.cookies.spoofyAccessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(data => data.json())
+    .then((body) => {
+      res.cookie('spoofyUserId', body.id);
+      resolve();
+    })
+    .catch(err => reject(err));
 });
 
 spotify.getUser = req => new Promise((resolve, reject) => {
@@ -33,9 +50,9 @@ spotify.getUser = req => new Promise((resolve, reject) => {
     .catch(err => reject(err));
 });
 
-spotify.addNewPlaylist = (req, token) => new Promise((resolve, reject) => {
+spotify.addNewPlaylist = (req, token = null) => new Promise((resolve, reject) => {
   fetch(
-    'https://api.spotify.com/v1/users/1172537089/playlists',
+    `https://api.spotify.com/v1/users/${req.cookies.spoofyUserId}/playlists`,
     {
       method: 'POST',
       headers: {
@@ -59,7 +76,7 @@ spotify.addNewPlaylist = (req, token) => new Promise((resolve, reject) => {
     .catch(err => console.log(err)); // eslint-disable-line no-console
 });
 
-spotify.addTrackToPlaylist = (req, token) => new Promise((resolve, reject) => {
+spotify.addTrackToPlaylist = (req, token = null) => new Promise((resolve, reject) => {
   fetch(
     `https://api.spotify.com/v1/users/${req.params.userId}/playlists/${req.params.playlistId}/tracks`,
     {

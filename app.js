@@ -7,28 +7,13 @@ const JsonDB = require('node-json-db');
 const bodyParser = require('body-parser');
 const findIndex = require('lodash/findIndex');
 const spotify = require('./modules/spotify');
+const cookie = require('cookie');
 
 require('dotenv').config();
 
 const port = process.env.PORT || '3000';
 const host = process.env.HOST || '0.0.0.0';
 const app = express();
-
-const server = http.Server(app);
-const io = socket(server);
-const nsp = io.of('/playlist');
-
-nsp.on('connection', (client) => {
-  client.on('room', (room) => {
-    client.join(room);
-    console.log('client joined room', room);
-
-    client.on('disconnect', () => {
-      client.leave(room);
-      console.log('client leaved room', room);
-    });
-  });
-});
 
 debugHttp();
 
@@ -41,6 +26,33 @@ if (!clientId || !clientSecret) {
 
 const db = new JsonDB('spoofyDataBase', true, false);
 
+const server = http.Server(app);
+const io = socket(server);
+const nspPlaylist = io.of('/playlist');
+const nspHome = io.of('/home');
+
+nspHome.on('connection', (client) => {
+  client.on('disconnect', () => {
+    const user = cookie.parse(client.handshake.headers.cookie).spoofyUserId;
+    const disconected = db.getData('/disconected');
+    const index = findIndex(disconected, disconnect => disconnect.id === user);
+
+    if (index === -1) {
+      db.push('/disconected[]', { id: user, missed: 0 }, true);
+    }
+  });
+});
+
+nspPlaylist.on('connection', (client) => {
+  client.on('room', (room) => {
+    client.join(room);
+
+    client.on('disconnect', () => {
+      client.leave(room);
+    });
+  });
+});
+
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -50,7 +62,7 @@ app.use(express.static('src', { maxAge: '31d' }))
   .set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render home
     res.redirect('/home');
   } else {
@@ -72,15 +84,23 @@ app.get('/callback', (req, res) => {
   } else {
     // Everything seems fine. Let's move on.
     spotify.callback(req, res)
+      .then(token => spotify.getCurrentUser(req, res, token))
       .then(() => res.redirect('/home'))
       .catch(err => res.render('pages/500', { err: err.message }));
   }
 });
 
 app.get('/home', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render
-    res.render('pages/home', { playlists: db.getData('/playlists') });
+    const disconected = db.getData('/disconected');
+    const index = findIndex(disconected, disconnect => disconnect.id === req.cookies.spoofyUserId);
+    let missed = null;
+    if (index !== -1) {
+      missed = disconected[index].missed;
+      db.delete(`/disconected[${index}]`);
+    }
+    res.render('pages/home', { playlists: db.getData('/playlists'), missed });
   } else {
     // No auth yet render login
     res.redirect('/');
@@ -88,7 +108,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/add-playlist', (req, res) => {
-  if (req.cookies.spoofyAccessToken) {
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render
     res.render('pages/add-playlist');
   } else {
@@ -97,35 +117,55 @@ app.get('/add-playlist', (req, res) => {
   }
 });
 
-function saveNewPlaylist(res, data) {
+function saveNewPlaylist(data) {
   db.push('/playlists[]', { id: data.id, name: data.name, images: data.images, ownerId: data.owner.id, tracks: data.tracks.items }, true);
-  res.redirect('/home');
+  return data;
 }
 
 app.post('/add-playlist', (req, res) => {
   spotify.addNewPlaylist(req)
-    .then(body => saveNewPlaylist(res, body))
+    .then(body => saveNewPlaylist(body))
+    .then((body) => {
+      nspHome.emit('playlist', body);
+      res.redirect('/home');
+    })
     .catch(() => spotify.refresh()
       .then(token => spotify.addNewPlaylist(req, token))
-      .then(body => saveNewPlaylist(res, body))
-      .catch(err => res.render('pages/500', { err: err.message }))
+      .then(body => saveNewPlaylist(body))
+      .then((body) => {
+        nspHome.emit('playlist', body);
+        res.redirect('/home');
+      })
+      .catch(err => res.send(err.message))
     );
 });
 
 app.get('/playlist/:userId/:playlistId', (req, res) => {
-  const allPlaylists = db.getData('/playlists');
-  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
+    // User has auth render
+    const allPlaylists = db.getData('/playlists');
+    const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  spotify.getUser(req)
+    spotify.getUser(req)
     .then(body => res.render('pages/playlist', { playlist: allPlaylists[index], owner: body.display_name || body.id }))
     .catch(err => res.render('pages/500', { err: err.message }));
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
 });
 
 app.get('/add-song/:userId/:playlistId', (req, res) => {
-  const allPlaylists = db.getData('/playlists');
-  const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
+  if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
+    // User has auth render
+    const allPlaylists = db.getData('/playlists');
+    const index = findIndex(allPlaylists, playlist => playlist.id === req.params.playlistId);
 
-  res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
+    res.render('pages/add-song', { playlistName: allPlaylists[index].name, playlistId: req.params.playlistId, userId: req.params.userId });
+  } else {
+    // No auth yet render login
+    res.redirect('/');
+  }
 });
 
 function savePlaylist(req, data) {
@@ -137,12 +177,23 @@ function savePlaylist(req, data) {
   return data;
 }
 
+function addMissedToDisconected(req) {
+  const disconected = db.getData('/disconected');
+  disconected.forEach((disconnect) => {
+    if (disconnect.id !== req.cookies.spoofyUserId) {
+      disconnect.missed += 1; // eslint-disable-line no-param-reassign
+    }
+  });
+  db.push('/disconected', disconected, true);
+}
+
 app.post('/add-song/:userId/:playlistId', (req, res) => {
   spotify.addTrackToPlaylist(req)
     .then(() => spotify.getPlaylistData(req))
     .then(body => savePlaylist(req, body))
     .then((body) => {
-      nsp.to(`${req.params.playlistId}`).emit('track', body);
+      nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
+      addMissedToDisconected(req);
       res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
     .catch(() => spotify.refresh(req, res)
@@ -150,7 +201,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
       .then(token => spotify.getPlaylistData(req, token))
       .then(body => savePlaylist(req, body))
       .then((body) => {
-        nsp.to(`${req.params.playlistId}`).emit('track', body);
+        nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
         res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
       })
       .catch(err => res.render('pages/500', { err: err.message }))
