@@ -59,6 +59,19 @@ main {
   animation: notify .6s linear;
 }
 
+.missed img {
+  height: 1.6rem;
+  width: auto;
+  position: relative;
+  top: 0.2rem;
+  margin-right: .5rem;
+}
+
+.missed span {
+  margin-left: .5rem;
+  cursor: pointer;
+}
+
 @-webkit-keyframes notify {
   0%   {transform: translate(-50%, -150%);}
   100% {transform: translate(-50%, 50%);}

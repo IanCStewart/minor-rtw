@@ -177,9 +177,13 @@ function savePlaylist(req, data) {
   return data;
 }
 
-function addMissedToDisconected() {
+function addMissedToDisconected(req) {
   const disconected = db.getData('/disconected');
-  disconected.forEach(disconnect => disconnect.missed += 1); // eslint-disable-line
+  disconected.forEach((disconnect) => {
+    if (disconnect.id !== req.cookies.spoofyUserId) {
+      disconnect.missed += 1; // eslint-disable-line no-param-reassign
+    }
+  });
   db.push('/disconected', disconected, true);
 }
 
@@ -189,7 +193,7 @@ app.post('/add-song/:userId/:playlistId', (req, res) => {
     .then(body => savePlaylist(req, body))
     .then((body) => {
       nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
-      addMissedToDisconected();
+      addMissedToDisconected(req);
       res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
     .catch(() => spotify.refresh(req, res)

@@ -22,9 +22,9 @@
             <p class="empty-state">There are no playlists yet, go and make a new one!</p>
           <% } %>
       </article>
-      <a class="button" href="/add-playlist">New playlist</a>
+      <% if (playlists.length < 100) { %><a class="button" href="/add-playlist">New playlist</a><% } %>
     </main>
-    <% if (missed) { %><div class="missed">you missed <%= missed %> updates</div><% } %>
+    <% if (missed && missed > 0) { %><div class="missed"><img src="/img/info.svg" /> you missed <%= missed %> update(s) <span id="remove">x</span></div><% } %>
     <%- include ../partials/footer -%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.1/socket.io.js"></script>
     <script>
@@ -47,6 +47,16 @@
           '</a>'
         );
       });
+
+      <% if (missed && missed > 0) { %>
+        document.getElementById('remove').addEventListener(
+          'click',
+          function() {
+            var notify = document.getElementsByClassName('missed')[0];
+            notify.parentNode.removeChild(notify);
+          }
+        );
+      <% } %>
     </script>
   </body>
 </html>
