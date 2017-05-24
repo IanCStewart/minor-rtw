@@ -21,6 +21,12 @@ const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const nowUrl = process.env.NOW_URL;
 
+let redirectUri = 'http://localhost:3000/callback';
+
+if (nowUrl) {
+  redirectUri = nowUrl;
+}
+
 if (!clientId || !clientSecret) {
   throw new Error('Missing a `KEY` in .env');
 }
@@ -39,7 +45,11 @@ nspHome.on('connection', (client) => {
     const index = findIndex(disconected, disconnect => disconnect.id === user);
 
     if (index === -1) {
-      db.push('/disconected[]', { id: user, missed: 0 }, true);
+      try {
+        db.push('/disconected[]', { id: user, missed: 0 }, true);
+      } catch (error) {
+        console.log(error, error.inner);
+      }
     }
   });
 });
@@ -70,7 +80,7 @@ app.get('/', (req, res) => {
     // No auth yet render login
     res.render(
       'pages/login',
-      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=${nowUrl}/callback&show_dialog=true` }
+      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=${redirectUri}/callback&show_dialog=true` }
     );
   }
 });

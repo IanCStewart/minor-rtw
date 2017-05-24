@@ -4,11 +4,18 @@ require('dotenv').config();
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
+const nowUrl = process.env.NOW_URL;
+
+let redirectUri = 'http://localhost:3000/callback';
+
+if (nowUrl) {
+  redirectUri = nowUrl;
+}
 
 const spotify = {};
 
 spotify.callback = (req, res) => new Promise((resolve, reject) => {
-  fetch(`https://accounts.spotify.com/api/token?grant_type=authorization_code&code=${req.query.code}&redirect_uri=http://localhost:3000/callback`,
+  fetch(`https://accounts.spotify.com/api/token?grant_type=authorization_code&code=${req.query.code}&redirect_uri=${redirectUri}`,
     {
       method: 'POST',
       headers: {
