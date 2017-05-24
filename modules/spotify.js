@@ -26,6 +26,7 @@ spotify.callback = (req, res) => new Promise((resolve, reject) => {
   )
   .then(data => data.json())
   .then((body) => {
+    console.log(body);
     res.cookie('spoofyAccessToken', body.access_token);
     res.cookie('spoofyRefreshToken', body.refresh_token);
     resolve(body.access_token);
