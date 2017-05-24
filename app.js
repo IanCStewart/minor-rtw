@@ -19,6 +19,7 @@ debugHttp();
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
+const nowUrl = process.env.NOW_URL;
 
 if (!clientId || !clientSecret) {
   throw new Error('Missing a `KEY` in .env');
@@ -69,7 +70,7 @@ app.get('/', (req, res) => {
     // No auth yet render login
     res.render(
       'pages/login',
-      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=http://localhost:3000/callback&show_dialog=true` }
+      { loginLink: `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=playlist-modify-private playlist-modify-public&redirect_uri=${nowUrl}/callback&show_dialog=true` }
     );
   }
 });
