@@ -15,6 +15,7 @@ if (nowUrl) {
 const spotify = {};
 
 spotify.callback = (req, res) => new Promise((resolve, reject) => {
+  console.log(redirectUri);
   fetch(`https://accounts.spotify.com/api/token?grant_type=authorization_code&code=${req.query.code}&redirect_uri=${redirectUri}`,
     {
       method: 'POST',
