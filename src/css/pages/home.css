@@ -1,0 +1,83 @@
+main {
+  max-height: calc(100% - 10.2rem);
+  overflow: auto;
+}
+
+.all-playlists {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.all-playlists a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.playlist {
+  text-align: center;
+  margin: 0 .8rem 2.5rem;
+}
+
+.playlist div {
+  width: 200px;
+  height: 200px;
+  background-position: center;
+  background-size: cover;
+}
+
+.playlist h1 {
+  font-weight: bold;
+  text-transform: capitalize;
+  margin: 1.2rem 0 .4rem;
+  font-size: 1.6rem;
+}
+
+.playlist h2 {
+  font-size: 1.4rem;
+  color: #999;
+}
+
+.empty-state {
+  width: 100%;
+  text-align: center;
+  margin: 1.2rem 0;
+  font-size: 1.6rem;
+  color: #999;
+}
+
+.missed {
+  display: inline-block;
+  padding: 1rem;
+  font-size: 1.6rem;
+  position: fixed;
+  border-radius: 3px;
+  background: #242424;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  -webkit-animation: notify .6s linear;
+  animation: notify .6s linear;
+}
+
+.missed img {
+  height: 1.6rem;
+  width: auto;
+  position: relative;
+  top: 0.2rem;
+  margin-right: .5rem;
+}
+
+.missed span {
+  margin-left: .5rem;
+  cursor: pointer;
+}
+
+@-webkit-keyframes notify {
+  0%   {transform: translate(-50%, -150%);}
+  100% {transform: translate(-50%, 50%);}
+}
+
+@keyframes notify {
+  0%   {transform: translate(-50%, -150%);}
+  100% {transform: translate(-50%, 50%);}
+}

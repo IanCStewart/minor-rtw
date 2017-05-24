@@ -5,6 +5,8 @@
 
 The project will be to build a real time web application based on realtime data from an external server. The client will see this dynamic data on the client side (*in a web-browser*).
 
+> For a demo with sockets in a chat I have the [following repo](https://github.com/IanCStewart/minor-part-up). I will soon add a different kind of demo here.
+
 # Getting started
 ## Cloning
 
@@ -16,6 +18,18 @@ $ cd ~/Sites/ && git clone git@github.com:IanCStewart/minor-rtw.git && cd minor-
 Get the node modules:
 ```
 $ npm i
+```
+
+## Run server
+
+Run start command for the server:
+```
+$ npm run start
+```
+
+Should return something like this:
+```
+Server running 0.0.0.0:3000
 ```
 
 # Contributing

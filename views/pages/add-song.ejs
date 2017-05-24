@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <%- include ../partials/meta -%>
+    <link rel="stylesheet" type="text/css" href="/css/pages/add-song.css">
+    <title>Index</title>
+  </head>
+
+  <body>
+    <%- include ../partials/header %>
+    <nav><a href="/playlist/<%= userId %>/<%= playlistId %>">< go back</a></nav>
+    <main>
+      <h1>Add song to <%= playlistName %></h1>
+      <form method="post" action="/add-song/<%= userId %>/<%= playlistId %>">
+        <label for="uri">
+          <span>Spotify URI</span>
+          <input autocomplete="off" required type="text" id="uri" name="uri" placeholder="Spotify URI...">
+        </label>
+        <button type="submit">Add song</button>
+      </form>
+    </main>
+    <%- include ../partials/footer -%>
+  </body>
+</html>

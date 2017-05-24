@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <%- include ../partials/meta -%>
+    <link rel="stylesheet" type="text/css" href="/css/pages/home.css">
+    <title>Index</title>
+  </head>
+
+  <body>
+    <%- include ../partials/header %>
+    <main>
+      <article class="all-playlists">
+        <% if (playlists.length > 0) { playlists.forEach(function (playlist) { %>
+          <a href="/playlist/<%= playlist.ownerId %>/<%= playlist.id %>">
+            <section class="playlist">
+              <div style="background-image: url(<% if (playlist.images[0]) { %><%= playlist.images[0].url %><% } else { %>/img/playlist-placeholder.jpg<% } %>)"></div>
+              <h1><%= playlist.name %></h1>
+            </section>
+          </a>
+          <% }); } else { %>
+            <p class="empty-state">There are no playlists yet, go and make a new one!</p>
+          <% } %>
+      </article>
+      <% if (playlists.length < 100) { %><a class="button" href="/add-playlist">New playlist</a><% } %>
+    </main>
+    <% if (missed && missed > 0) { %><div class="missed"><img src="/img/info.svg" /> you missed <%= missed %> update(s) <span id="remove">x</span></div><% } %>
+    <%- include ../partials/footer -%>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.1/socket.io.js"></script>
+    <script>
+      var socket = io('/home');
+
+      socket.on('playlist', function(data) {
+        var image = '/img/playlist-placeholder.jpg';
+
+        if (data.images[0]) {
+          image = data.images[0].url;
+        }
+
+        document.getElementsByClassName('all-playlists')[0].insertAdjacentHTML(
+          'beforeend',
+          '<a href="/playlist/' + data.ownerId + '/' + data.id + '">' +
+            '<section class="playlist">' +
+              '<div style="background-image: url(' + image + ')"></div>' +
+              '<h1>' + data.name + '</h1>' +
+            '</section>' +
+          '</a>'
+        );
+      });
+
+      <% if (missed && missed > 0) { %>
+        document.getElementById('remove').addEventListener(
+          'click',
+          function() {
+            var notify = document.getElementsByClassName('missed')[0];
+            notify.parentNode.removeChild(notify);
+          }
+        );
+      <% } %>
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+.album-data {
+  display: flex;
+  margin-bottom: 4rem;
+}
+
+.album-artwork {
+  width: 15rem;
+  height: 15rem;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 10px rgba(0,0,0,.3);
+  margin-right: 3rem;
+}
+
+nav {
+  margin: 2rem 0;
+  font-size: 1.5rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #999;
+  opacity: .75;
+  transition: color .3s ease-in-out;
+}
+
+nav a:hover {
+  color: #fff;
+}
+
+main {
+  max-height: calc(100% - 13.7rem);
+  overflow: auto;
+}
+
+main h1 {
+  font-weight: bold;
+  text-transform: capitalize;
+  margin: 1.6rem 0 1rem;
+  font-size: 3.6rem;
+}
+
+main h2 {
+  font-size: 1.4rem;
+  font-weight: lighter;
+  color: #999;
+}
+
+main h2 em {
+  color: #fff;
+}
+
+table {
+  width: 100%;
+  text-align: left;
+  font-size: 1.4rem;
+  margin-bottom: 4rem;
+}
+
+tr {
+  border-bottom: 1px solid rgba(153, 153, 153, 0.3);
+}
+
+th,
+td {
+  padding: 1rem;
+}
+
+th {
+  color: #999;
+  text-transform: uppercase;
+}
+
+td {
+  text-transform: capitalize;
+}
+
+th svg {
+  height: 1.6rem;
+  width: auto;
+}
+
+th svg path {
+  stroke: #999;
+}
+
+th svg text {
+  fill: #999;
+}
+
+tr > :first-child {
+  width: 2rem;
+  padding: 0;
+}
+
+tr > :nth-child(2) {
+  width: calc(50% - 2rem);
+}
+
+tr > :nth-child(3),
+tr > :last-child {
+  width: 25%;
+}
