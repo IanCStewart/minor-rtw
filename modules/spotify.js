@@ -58,6 +58,7 @@ spotify.getUser = req => new Promise((resolve, reject) => {
 });
 
 spotify.addNewPlaylist = (req, token = null) => new Promise((resolve, reject) => {
+  console.log(req);
   fetch(
     `https://api.spotify.com/v1/users/${req.cookies.spoofyUserId}/playlists`,
     {
