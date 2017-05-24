@@ -33,7 +33,13 @@ const nspHome = io.of('/home');
 
 nspHome.on('connection', (client) => {
   client.on('disconnect', () => {
-    db.push('/diconected[]', { id: cookie.parse(client.handshake.headers.cookie).spoofyUserId, missed: [] }, true);
+    const user = cookie.parse(client.handshake.headers.cookie).spoofyUserId;
+    const disconected = db.getData('/disconected');
+    const index = findIndex(disconected, disconnect => disconnect.id === user);
+
+    if (index === -1) {
+      db.push('/disconected[]', { id: user, missed: 0 }, true);
+    }
   });
 });
 
@@ -87,7 +93,14 @@ app.get('/callback', (req, res) => {
 app.get('/home', (req, res) => {
   if (req.cookies.spoofyAccessToken && req.cookies.spoofyRefreshToken && req.cookies.spoofyUserId) {
     // User has auth render
-    res.render('pages/home', { playlists: db.getData('/playlists') });
+    const disconected = db.getData('/disconected');
+    const index = findIndex(disconected, disconnect => disconnect.id === req.cookies.spoofyUserId);
+    let missed = null;
+    if (index !== -1) {
+      missed = disconected[index].missed;
+      db.delete(`/disconected[${index}]`);
+    }
+    res.render('pages/home', { playlists: db.getData('/playlists'), missed });
   } else {
     // No auth yet render login
     res.redirect('/');
@@ -164,12 +177,19 @@ function savePlaylist(req, data) {
   return data;
 }
 
+function addMissedToDisconected() {
+  const disconected = db.getData('/disconected');
+  disconected.forEach(disconnect => disconnect.missed += 1); // eslint-disable-line
+  db.push('/disconected', disconected, true);
+}
+
 app.post('/add-song/:userId/:playlistId', (req, res) => {
   spotify.addTrackToPlaylist(req)
     .then(() => spotify.getPlaylistData(req))
     .then(body => savePlaylist(req, body))
     .then((body) => {
       nspPlaylist.to(`${req.params.playlistId}`).emit('track', body);
+      addMissedToDisconected();
       res.redirect(`/playlist/${req.params.userId}/${req.params.playlistId}`);
     })
     .catch(() => spotify.refresh(req, res)

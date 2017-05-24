@@ -44,3 +44,27 @@ main {
   font-size: 1.6rem;
   color: #999;
 }
+
+.missed {
+  display: inline-block;
+  padding: 1rem;
+  font-size: 1.6rem;
+  position: fixed;
+  border-radius: 3px;
+  background: #242424;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  -webkit-animation: notify .6s linear;
+  animation: notify .6s linear;
+}
+
+@-webkit-keyframes notify {
+  0%   {transform: translate(-50%, -150%);}
+  100% {transform: translate(-50%, 50%);}
+}
+
+@keyframes notify {
+  0%   {transform: translate(-50%, -150%);}
+  100% {transform: translate(-50%, 50%);}
+}

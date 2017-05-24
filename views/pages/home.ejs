@@ -24,6 +24,7 @@
       </article>
       <a class="button" href="/add-playlist">New playlist</a>
     </main>
+    <% if (missed) { %><div class="missed">you missed <%= missed %> updates</div><% } %>
     <%- include ../partials/footer -%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.1/socket.io.js"></script>
     <script>
